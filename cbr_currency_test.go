@@ -79,7 +79,7 @@ func Test_Currency_ValueDecimal(t *testing.T) {
 	assert.False(t, notExpected.Equal(resNom), "Does not expect %v, have %v", notExpected, resNom)
 }
 
-func Test_getCusssrrencyRateValue_Error(t *testing.T) {
+func Test_getCurrencyRateValue_Error(t *testing.T) {
 	c := Currency{}
 	c.Value = "0'1"
 	rate, err := c.ValueFloat()
