@@ -24,14 +24,6 @@ func Test_getRate_Error(t *testing.T) {
 	assert.Equal(t, float64(0), rate)
 }
 
-func Test_getCurrencyRateValue_Error(t *testing.T) {
-	c := Currency{}
-	c.Value = "0'1"
-	rate, err := getCurrencyRateValue(c)
-	assert.NotNil(t, err)
-	assert.Equal(t, float64(0), rate)
-}
-
 // Check for the cache functionality
 func Test_getRate_Cache(t *testing.T) {
 	Debug = true

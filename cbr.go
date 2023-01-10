@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/shopspring/decimal"
 	"golang.org/x/text/encoding/charmap"
 )
 
@@ -36,6 +37,44 @@ type Currency struct {
 	Value    string `xml:"Value"`
 }
 
+// Returns properly formatted currency Value string
+func (cur Currency) ValueString() string {
+	return strings.Replace(cur.Value, ",", ".", -1)
+}
+
+// Returns currency Value in float64, without nominal correction
+func (cur Currency) ValueFloatRaw() (float64, error) {
+	return strconv.ParseFloat(cur.ValueString(), 64)
+}
+
+// Returns currency Value in float64, corrected by nominal
+func (cur Currency) ValueFloat() (float64, error) {
+	res, err := cur.ValueFloatRaw()
+	if err != nil {
+		return res, err
+	}
+	return res / float64(cur.Nom), nil
+}
+
+// Returns currency Value in Decimal, without nominal correction
+//
+// Rationale: https://pkg.go.dev/github.com/shopspring/decimal - FAQ section
+func (cur Currency) ValueDecimalRaw() (decimal.Decimal, error) {
+	return decimal.NewFromString(cur.ValueString())
+}
+
+// Returns currency Value in Decimal, corrected by nominal
+//
+// Rationale: https://pkg.go.dev/github.com/shopspring/decimal - FAQ section
+func (cur Currency) ValueDecimal() (decimal.Decimal, error) {
+	res, err := cur.ValueDecimalRaw()
+	if err != nil {
+		return res, err
+	}
+	nominal := decimal.NewFromInt(int64(cur.Nom))
+	return res.Div(nominal), nil
+}
+
 // Result is a result representation
 type Result struct {
 	XMLName    xml.Name   `xml:"ValCurs"`
@@ -47,28 +86,47 @@ func getRate(currency string, t time.Time, fetch fetchFunction, useCache bool) (
 	if Debug {
 		log.Printf("Fetching the currency rate for %s at %v\n", currency, t.Format("02.01.2006"))
 	}
-
-	result, err := getCurrenciesCacheOrRequest(t, fetch, useCache)
+	curr, err := getCurrency(currency, t, fetch, useCache)
 	if err != nil {
 		return 0, err
+	}
+	return curr.ValueFloat()
+}
+
+func getRateDecimal(currency string, t time.Time, fetch fetchFunction, useCache bool) (decimal.Decimal, error) {
+	if Debug {
+		log.Printf("Fetching the currency rate for %s at %v\n  in Decimal", currency, t.Format("02.01.2006"))
+	}
+	curr, err := getCurrency(currency, t, fetch, useCache)
+	if err != nil {
+		return decimal.Zero, err
+	}
+	return curr.ValueDecimal()
+}
+
+func getRateString(currency string, t time.Time, fetch fetchFunction, useCache bool) (string, error) {
+	if Debug {
+		log.Printf("Fetching the currency rate string for %s at %v\n", currency, t.Format("02.01.2006"))
+	}
+	curr, err := getCurrency(currency, t, fetch, useCache)
+	if err != nil {
+		return "", err
+	}
+	return curr.ValueString(), nil
+}
+
+func getCurrency(currency string, t time.Time, fetch fetchFunction, useCache bool) (Currency, error) {
+	result, err := getCurrenciesCacheOrRequest(t, fetch, useCache)
+	if err != nil {
+		return Currency{}, err
 	}
 
 	for _, v := range result.Currencies {
 		if v.CharCode == currency {
-			return getCurrencyRateValue(v)
+			return v, nil
 		}
 	}
-	return 0, fmt.Errorf("Unknown currency: %s", currency)
-}
-
-func getCurrencyRateValue(cur Currency) (float64, error) {
-	var res float64 = 0
-	properFormattedValue := strings.Replace(cur.Value, ",", ".", -1)
-	res, err := strconv.ParseFloat(properFormattedValue, 64)
-	if err != nil {
-		return res, err
-	}
-	return res / float64(cur.Nom), nil
+	return Currency{}, fmt.Errorf("unknown currency: %s", currency)
 }
 
 func getCurrenciesCacheOrRequest(t time.Time, fetch fetchFunction, useCache bool) (Result, error) {
@@ -119,7 +177,7 @@ func getCurrencies(v *Result, t time.Time, fetch fetchFunction) error {
 		case "windows-1251":
 			return charmap.Windows1251.NewDecoder().Reader(input), nil
 		default:
-			return nil, fmt.Errorf("Unknown charset: %s", charset)
+			return nil, fmt.Errorf("unknown charset: %s", charset)
 		}
 	}
 	err = decoder.Decode(&v)
