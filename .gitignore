@@ -2,3 +2,4 @@
 vendor/
 *.out
 *.sh
+.vscode/*
