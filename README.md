@@ -10,7 +10,7 @@ go-cbr-client is a fork of [matperez's](https://github.com/matperez) [client](ht
 
 First, ensure the library is installed and up to date by running ```go get -u github.com/ivanglie/go-cbr-client```.
 
-This is a very simple app that just displays exhange rate of US dollar.
+This is a very simple app that just displays exchange rate of US dollar.
 
 ```golang
 package main
@@ -24,11 +24,20 @@ import (
 
 func main() {
 	client := cbr.NewClient()
-	rate, err := client.GetRate("USD", time.Now())
+	
+	// For float64 value:
+	rateFloat64, err := client.GetRate("USD", time.Now())
+
+	// For Decimal value:
+	rateDecimal, err := client.GetRateDecimal("USD", time.Now())
+
+	// For String value with dot as decimal separator:
+	rateString, err := client.GetRateString("USD", time.Now())
+
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(rate)
+	fmt.Println(rateFloat64)
 }
 ```
 See [main.go](./_example/main.go).
