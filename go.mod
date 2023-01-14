@@ -1,4 +1,4 @@
-module github.com/ivanglie/go-cbr-client
+module github.com/alexanderkmd/go-cbr-client
 
 go 1.16
 

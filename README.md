@@ -4,7 +4,9 @@
 [![Test](https://github.com/ivanglie/go-cbr-client/actions/workflows/test.yml/badge.svg)](https://github.com/ivanglie/go-cbr-client/actions/workflows/test.yml)
 [![Codecov](https://codecov.io/gh/ivanglie/go-cbr-client/branch/master/graph/badge.svg?token=46HUJQAM56)](https://codecov.io/gh/ivanglie/go-cbr-client)
 
-go-cbr-client is a fork of [matperez's](https://github.com/matperez) [client](https://github.com/matperez/go-cbr-client) for [CBRF API](http://www.cbr.ru/development/).
+go-cbr-client is a fork of [matperez's](https://github.com/matperez) [client](https://github.com/matperez/go-cbr-client) and  [ivangile's](https://github.com/ivanglie) [client](https://github.com/ivanglie/go-cbr-client) for [CBRF API](http://www.cbr.ru/development/).
+
+Request cache and different output types added.
 
 ## Example
 
