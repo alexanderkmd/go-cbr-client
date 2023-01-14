@@ -9,9 +9,28 @@ import (
 
 func main() {
 	client := cbr.NewClient()
-	rate, err := client.GetRate("USD", time.Now())
+
+	// For float64 value:
+	rateFloat64, err := client.GetRate("USD", time.Now())
+
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(rate)
+	fmt.Println(rateFloat64)
+
+	// For Decimal value:
+	rateDecimal, err := client.GetRateDecimal("USD", time.Now())
+
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(rateDecimal)
+
+	// For String value with dot as decimal separator:
+	rateString, err := client.GetRateString("USD", time.Now())
+
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(rateString)
 }
