@@ -1,8 +1,8 @@
 # Golang client for the Central Bank of the Russian Federation currency rates API
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/ivanglie/go-cbr-client.svg)](https://pkg.go.dev/github.com/ivanglie/go-cbr-client)
-[![Test](https://github.com/ivanglie/go-cbr-client/actions/workflows/test.yml/badge.svg)](https://github.com/ivanglie/go-cbr-client/actions/workflows/test.yml)
-[![Codecov](https://codecov.io/gh/ivanglie/go-cbr-client/branch/master/graph/badge.svg?token=46HUJQAM56)](https://codecov.io/gh/ivanglie/go-cbr-client)
+[![Go Reference](https://pkg.go.dev/badge/github.com/alexanderkmd/go-cbr-client.svg)](https://pkg.go.dev/github.com/alexanderkmd/go-cbr-client)
+[![Test](https://github.com/alexanderkmd/go-cbr-client/actions/workflows/test.yml/badge.svg)](https://github.com/alexanderkmd/go-cbr-client/actions/workflows/test.yml)
+[![Codecov](https://codecov.io/gh/alexanderkmd/go-cbr-client/branch/master/graph/badge.svg?token=46HUJQAM56)](https://codecov.io/gh/alexanderkmd/go-cbr-client)
 
 go-cbr-client is a fork of [matperez's](https://github.com/matperez) [client](https://github.com/matperez/go-cbr-client) and  [ivangile's](https://github.com/ivanglie) [client](https://github.com/ivanglie/go-cbr-client) for [CBRF API](http://www.cbr.ru/development/).
 
