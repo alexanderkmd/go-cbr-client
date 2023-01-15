@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -136,4 +137,26 @@ func logElapsedTime(start time.Time, prev time.Time) time.Time {
 		log.Printf("Elapsed since previous %vµs, total %vµs\n", time.Since(prev).Microseconds(), time.Since(start).Microseconds())
 	}
 	return time.Now()
+}
+
+func Test_getRate_Decimal(t *testing.T) {
+	Debug = true
+	loc, _ := time.LoadLocation("Europe/Moscow")
+	testDate := time.Date(2022, 12, 16, 1, 1, 1, 0, time.UTC).In(loc)
+
+	// Get first request uncached
+	rate, err := getRateDecimal("USD", testDate, http.Get, true)
+	assert.Nil(t, err)
+	assert.True(t, rate.Equal(decimal.NewFromFloat(64.3015)))
+}
+
+func Test_getRate_String(t *testing.T) {
+	Debug = true
+	loc, _ := time.LoadLocation("Europe/Moscow")
+	testDate := time.Date(2022, 12, 16, 1, 1, 1, 0, time.UTC).In(loc)
+
+	// Get first request uncached
+	rate, err := getRateString("USD", testDate, http.Get, true)
+	assert.Nil(t, err)
+	assert.Equal(t, "64.3015", rate)
 }
