@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/shopspring/decimal"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/text/encoding/charmap"
 )
 
@@ -18,10 +19,6 @@ const (
 	baseURL    = "http://www.cbr.ru/scripts/XML_daily_eng.asp"
 	dateFormat = "02/01/2006"
 )
-
-// Debug mode
-// If this variable is set to true, debug mode activated for the package
-var Debug = false
 
 // Cache for requests
 var cache map[string]Result
@@ -82,41 +79,38 @@ type Result struct {
 	Currencies []Currency `xml:"Valute"`
 }
 
-func getRate(currency string, t time.Time, fetch fetchFunction, useCache bool) (float64, error) {
-	if Debug {
-		log.Printf("Fetching the currency rate for %s at %v\n", currency, t.Format("02.01.2006"))
-	}
-	curr, err := getCurrency(currency, t, fetch, useCache)
+func getRate(currency string, t time.Time, fetch fetchFunction, useCache bool, logger *logrus.Logger) (float64, error) {
+	logger.Debugf("Fetching the currency rate for %s at %v", currency, t.Format("02.01.2006"))
+
+	curr, err := getCurrency(currency, t, fetch, useCache, logger)
 	if err != nil {
 		return 0, err
 	}
 	return curr.ValueFloat()
 }
 
-func getRateDecimal(currency string, t time.Time, fetch fetchFunction, useCache bool) (decimal.Decimal, error) {
-	if Debug {
-		log.Printf("Fetching the currency rate for %s at %v\n  in Decimal", currency, t.Format("02.01.2006"))
-	}
-	curr, err := getCurrency(currency, t, fetch, useCache)
+func getRateDecimal(currency string, t time.Time, fetch fetchFunction, useCache bool, logger *logrus.Logger) (decimal.Decimal, error) {
+	logger.Debugf("Fetching the currency rate for %s at %v\n  in Decimal", currency, t.Format("02.01.2006"))
+
+	curr, err := getCurrency(currency, t, fetch, useCache, logger)
 	if err != nil {
 		return decimal.Zero, err
 	}
 	return curr.ValueDecimal()
 }
 
-func getRateString(currency string, t time.Time, fetch fetchFunction, useCache bool) (string, error) {
-	if Debug {
-		log.Printf("Fetching the currency rate string for %s at %v\n", currency, t.Format("02.01.2006"))
-	}
-	curr, err := getCurrency(currency, t, fetch, useCache)
+func getRateString(currency string, t time.Time, fetch fetchFunction, useCache bool, logger *logrus.Logger) (string, error) {
+	logger.Debugf("Fetching the currency rate string for %s at %v", currency, t.Format("02.01.2006"))
+
+	curr, err := getCurrency(currency, t, fetch, useCache, logger)
 	if err != nil {
 		return "", err
 	}
 	return curr.ValueString(), nil
 }
 
-func getCurrency(currency string, t time.Time, fetch fetchFunction, useCache bool) (Currency, error) {
-	result, err := getCurrenciesCacheOrRequest(t, fetch, useCache)
+func getCurrency(currency string, t time.Time, fetch fetchFunction, useCache bool, logger *logrus.Logger) (Currency, error) {
+	result, err := getCurrenciesCacheOrRequest(t, fetch, useCache, logger)
 	if err != nil {
 		return Currency{}, err
 	}
@@ -129,19 +123,21 @@ func getCurrency(currency string, t time.Time, fetch fetchFunction, useCache boo
 	return Currency{}, fmt.Errorf("unknown currency: %s", currency)
 }
 
-func getCurrenciesCacheOrRequest(t time.Time, fetch fetchFunction, useCache bool) (Result, error) {
+func getCurrenciesCacheOrRequest(t time.Time, fetch fetchFunction, useCache bool, logger *logrus.Logger) (Result, error) {
 	formatedDate := t.Format(dateFormat)
 
 	result := Result{}
 
 	// if currencies were already requested for this date - return from cache, if it is used
 	if cachedResult, exist := cache[formatedDate]; exist && useCache {
-		log.Printf("Get from cache!")
+		logger.Info("Got currency data from cache!")
 		result = cachedResult
 		cacheHits += 1
 	} else {
-		err := getCurrencies(&result, t, fetch)
+		err := getCurrencies(&result, t, fetch, logger)
 		if err != nil {
+			logger.Errorf("Error getiing Currencies: %s", err)
+			logger.Debug(result)
 			return result, err
 		}
 		if useCache {
@@ -156,17 +152,28 @@ func getCurrenciesCacheOrRequest(t time.Time, fetch fetchFunction, useCache bool
 	return result, nil
 }
 
-func getCurrencies(v *Result, t time.Time, fetch fetchFunction) error {
+func getCurrencies(v *Result, t time.Time, fetch fetchFunction, logger *logrus.Logger) error {
 	url := baseURL + "?date_req=" + t.Format(dateFormat)
+	logger.Debug(url)
 	if fetch == nil {
+		logger.Error("Empty fetch function provided")
 		return errors.New("fetch is empty")
 	}
 	resp, err := fetch(url)
 	if err != nil {
+		logger.Errorf("Error fetching URL: %s", err)
 		return err
 	}
+	status := resp.StatusCode
+	logger.Debugf("Response status code: %v:", status)
+	if status != 200 {
+		logger.Errorf("Request returned abnormal status code: %v", status)
+		logger.Debug(resp)
+	}
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		logger.Errorf("Error reading response Body: %s", err)
 		return err
 	}
 	defer resp.Body.Close()
@@ -182,6 +189,8 @@ func getCurrencies(v *Result, t time.Time, fetch fetchFunction) error {
 	}
 	err = decoder.Decode(&v)
 	if err != nil {
+		logger.Errorf("Error decoding XML: %s", err)
+		logger.Debugf("%s", body)
 		return err
 	}
 
