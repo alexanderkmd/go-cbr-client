@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	cbr "github.com/ivanglie/go-cbr-client"
+	cbr "github.com/alexanderkmd/go-cbr-client"
 )
 
 func main() {
