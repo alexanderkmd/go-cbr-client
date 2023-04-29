@@ -1,6 +1,7 @@
 package cbr
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -26,7 +27,9 @@ type Client interface {
 
 	// Returns currency struct
 	GetCurrencyInfo(string, time.Time) (Currency, error)
+
 	SetFetchFunction(fetchFunction)
+	SetBaseUrl(string) error
 	SetLogLevel(logrus.Level)
 }
 
@@ -67,6 +70,16 @@ func (s *client) SetLogLevel(logLevel logrus.Level) {
 	s.logger.SetLevel(logLevel)
 	s.logLevel = logLevel
 }
+
+// Sets alternative baseUrl for compatible API
+func (s *client) SetBaseUrl(url string) error {
+	if url == "" {
+		return errors.New("empty base URL was provided")
+	}
+	baseURL = url
+	return nil
+}
+
 // NewClient creates a new rates service instance
 func NewClient() Client {
 	logger := logrus.New()

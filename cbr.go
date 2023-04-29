@@ -15,8 +15,9 @@ import (
 	"golang.org/x/text/encoding/charmap"
 )
 
+var baseURL = "http://www.cbr.ru/scripts/XML_daily_eng.asp"
+
 const (
-	baseURL    = "http://www.cbr.ru/scripts/XML_daily_eng.asp"
 	dateFormat = "02/01/2006"
 )
 

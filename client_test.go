@@ -1,6 +1,7 @@
 package cbr
 
 import (
+	"errors"
 	"net/http"
 	"reflect"
 	"testing"
@@ -31,4 +32,20 @@ func TestSetFetchFunction(t *testing.T) {
 	c := client{nil, false, logger.GetLevel(), *logger}
 	c.SetFetchFunction(func(url string) (resp *http.Response, err error) { return http.Get(url) })
 	assert.Equal(t, reflect.Func, reflect.TypeOf(c.fetch).Kind())
+}
+
+func TestSetBaseUrl(t *testing.T) {
+	logger := logrus.New()
+	logger.SetLevel(logrus.DebugLevel)
+	c := client{nil, false, logger.GetLevel(), *logger}
+
+	// test for error with empty URL
+	err := c.SetBaseUrl("")
+	if assert.Error(t, err) {
+		assert.Equal(t, errors.New("empty base URL was provided"), err)
+	}
+
+	// test no error for URL
+	err = c.SetBaseUrl("http://example.com")
+	assert.Equal(t, nil, err)
 }
